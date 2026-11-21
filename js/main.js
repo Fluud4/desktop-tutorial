@@ -187,12 +187,17 @@
     false
   );
 
+  var LEAD_EMAIL = "yugput@rambler.ru";
+  var LEAD_ENDPOINT = "https://formsubmit.co/ajax/" + LEAD_EMAIL;
+
   function showLeadSuccess(form) {
     var successHTML =
       '<div style="text-align:center;padding:2rem 0">' +
       '<div style="font-size:2.5rem;line-height:1;color:#16a34a">✓</div>' +
       '<p style="font-size:1.25rem;font-weight:700;margin-top:.75rem">Спасибо! Заявка принята.</p>' +
-      '<p style="font-size:.875rem;opacity:.7;margin-top:.25rem">Мы свяжемся с вами по указанному телефону.</p>' +
+      '<p style="font-size:.875rem;opacity:.7;margin-top:.25rem">Заявка отправлена на ' +
+      LEAD_EMAIL +
+      ". Мы свяжемся с вами по указанному телефону.</p>" +
       "</div>";
     var modal = form.closest && form.closest("#contact-modal");
     if (modal) {
@@ -208,24 +213,95 @@
     }
   }
 
+  function showLeadError(form, message) {
+    var err = form.querySelector("[data-lead-error]");
+    if (!err) {
+      err = document.createElement("p");
+      err.setAttribute("data-lead-error", "");
+      err.style.cssText =
+        "color:#dc2626;font-size:.875rem;margin-top:.5rem;text-align:center";
+      form.appendChild(err);
+    }
+    err.textContent =
+      message ||
+      "Не удалось отправить заявку. Напишите на " + LEAD_EMAIL + " или позвоните.";
+  }
+
   document.addEventListener(
     "submit",
     function (e) {
       var form = e.target;
       if (!form || !form.matches || !form.matches("form[data-lead-form]")) return;
       e.preventDefault();
-      if (form.querySelector('input[name="website"]').value) return;
+      var honeypot = form.querySelector('input[name="website"]');
+      if (honeypot && honeypot.value) return;
       if (!validateLeadPhones(form)) return;
+
       var btn =
         form.querySelector('button[type="submit"]') ||
         form.querySelector("button:not([type])");
+      var btnText = btn ? btn.textContent : "";
       if (btn) {
         btn.disabled = true;
         btn.textContent = "Отправляем…";
       }
-      setTimeout(function () {
-        showLeadSuccess(form);
-      }, 350);
+
+      var nameInput = form.querySelector('input[name="name"]');
+      var phoneInput = form.querySelector('input[name="phone"]');
+      var productInput = form.querySelector('input[name="product"]');
+      var payload = {
+        name: nameInput ? nameInput.value.trim() : "",
+        phone: phoneInput ? phoneInput.value.trim() : "",
+        product: productInput ? productInput.value.trim() : "",
+        _subject: "Заявка с сайта ЮгПуть",
+        _template: "table",
+        _captcha: "false",
+      };
+
+      fetch(LEAD_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) {
+          if (!res.ok) {
+            return res.json().catch(function () {
+              return {};
+            }).then(function () {
+              return Promise.reject(new Error("bad"));
+            });
+          }
+          return res.json().catch(function () {
+            return { success: true };
+          });
+        })
+        .then(function () {
+          showLeadSuccess(form);
+        })
+        .catch(function () {
+          // Fallback: open a prefilled email if the relay is unavailable.
+          var subject = encodeURIComponent("Заявка с сайта ЮгПуть");
+          var body = encodeURIComponent(
+            "Имя: " +
+              payload.name +
+              "\nТелефон: " +
+              payload.phone +
+              (payload.product ? "\nИнтерес: " + payload.product : "")
+          );
+          window.location.href =
+            "mailto:" + LEAD_EMAIL + "?subject=" + subject + "&body=" + body;
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = btnText || "Отправить заявку";
+          }
+          showLeadError(
+            form,
+            "Откройте почтовый клиент и отправьте письмо на " + LEAD_EMAIL + "."
+          );
+        });
     },
     false
   );

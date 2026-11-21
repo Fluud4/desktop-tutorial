@@ -15,5 +15,5 @@ python3 -m http.server 8000
 - `index.html` — главная страница
 - `privacy.html` — политика обработки персональных данных
 - `css/tailwind.css` — стили макета
-- `js/main.js` — модалка заявки, маска телефона, sticky CTA, анимации появления
+- `js/main.js` — модалка заявки, маска телефона, отправка на `yugput@rambler.ru`, sticky CTA, анимации появления
 - `assets/` — логотип, hero и фото секций
