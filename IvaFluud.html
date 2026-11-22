@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru" translate="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="google" content="notranslate" />
+  <title>IvaFluud — C++ compiler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-0: #0a0c0f;
+      --bg-1: #12161c;
+      --ink: #e8ece4;
+      --muted: #8b9588;
+      --line: rgba(232, 236, 228, 0.1);
+      --brass: #d2b48c;
+      --brass-deep: #a67c52;
+      --signal: #9dffb0;
+      --danger: #ff7a6e;
+      --warn: #ffd27a;
+      --font-display: "Space Grotesk", sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --radius: 2px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      color: var(--ink);
+      font-family: var(--font-display);
+      background: var(--bg-0);
+      overflow-x: hidden;
+    }
+    .atmosphere {
+      position: fixed; inset: 0; z-index: -2;
+      background:
+        radial-gradient(1200px 700px at 12% -10%, rgba(210, 180, 140, 0.18), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(157, 255, 176, 0.08), transparent 50%),
+        linear-gradient(160deg, #07090b 0%, #10151b 45%, #0b0e12 100%);
+      animation: drift 18s var(--ease) infinite alternate;
+    }
+    .grid-glow {
+      position: fixed; inset: 0; z-index: -1; opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(232, 236, 228, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 236, 228, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at 50% 20%, black 20%, transparent 75%);
+      pointer-events: none;
+    }
+    @keyframes drift {
+      from { transform: scale(1) translateY(0); }
+      to { transform: scale(1.04) translateY(-1.5%); }
+    }
+    .shell {
+      width: min(1280px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1.25rem 0 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: rise 0.7s var(--ease) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .top {
+      display: flex; flex-wrap: wrap; align-items: end;
+      justify-content: space-between; gap: 1.25rem;
+      padding-bottom: 0.75rem; border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+      text-shadow: 0 0 40px rgba(210, 180, 140, 0.25);
+    }
+    .tagline {
+      margin: 0.45rem 0 0;
+      color: var(--brass);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .controls {
+      display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem;
+    }
+    .field {
+      display: grid; gap: 0.35rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .field select {
+      appearance: none;
+      background: var(--bg-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b9588' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0.65rem 2rem 0.65rem 0.8rem;
+      font: 500 0.9rem/1 var(--font-display);
+      min-width: 8.5rem;
+    }
+    .field select:focus { outline: 1px solid var(--brass); outline-offset: 1px; }
+    .run {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      border: 0; border-radius: var(--radius);
+      padding: 0.8rem 1.15rem;
+      background: linear-gradient(135deg, var(--brass) 0%, var(--brass-deep) 100%);
+      color: #1a120a;
+      font: 700 0.95rem/1 var(--font-display);
+      cursor: pointer;
+      transition: transform 0.2s var(--ease), filter 0.2s var(--ease);
+    }
+    .run:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .run:disabled { opacity: 0.65; cursor: wait; transform: none; }
+    .run.busy { animation: pulse 1.1s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.15); }
+    }
+    .run-hotkey {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+      gap: 0.9rem;
+      flex: 1;
+      min-height: 0;
+    }
+    .side {
+      display: grid;
+      grid-template-rows: 160px minmax(220px, 1fr);
+      gap: 0.9rem;
+      min-height: 0;
+    }
+    .pane {
+      background: color-mix(in srgb, var(--bg-1) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .editor-pane { min-height: 520px; }
+    .pane-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--line);
+    }
+    .pane-head h1, .pane-head h2 {
+      margin: 0; font-size: 0.85rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .hint, .status {
+      margin: 0; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
+    }
+    .status.ok { color: var(--signal); }
+    .status.err { color: var(--danger); }
+    .status.run { color: var(--warn); }
+    textarea {
+      width: 100%; flex: 1; resize: none; border: 0; outline: none;
+      padding: 1rem; background: transparent; color: var(--ink);
+      font: 500 0.92rem/1.55 var(--font-mono); tab-size: 2;
+    }
+    textarea::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+    #code { min-height: 460px; }
+    #stdin { min-height: 90px; }
+    .output {
+      margin: 0; padding: 1rem; flex: 1; overflow: auto;
+      white-space: pre-wrap; word-break: break-word;
+      font: 500 0.86rem/1.55 var(--font-mono); color: var(--ink); min-height: 180px;
+    }
+    .output .sec {
+      display: block; margin-top: 0.85rem; color: var(--brass);
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .output .sec:first-child { margin-top: 0; }
+    .output .err-text { color: #ffb4ad; }
+    .output .ok-text { color: var(--signal); }
+    .output.empty::before {
+      content: "Нажмите «Запустить», чтобы скомпилировать и выполнить программу.";
+      color: var(--muted);
+    }
+    .foot { border-top: 1px solid var(--line); padding-top: 0.85rem; }
+    .foot p { margin: 0; color: var(--muted); font-size: 0.82rem; }
+    .foot code { font-family: var(--font-mono); color: var(--brass); }
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .side { grid-template-rows: 140px 280px; }
+      .editor-pane { min-height: 380px; }
+      #code { min-height: 320px; }
+      .brand { font-size: 2.1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grid-glow" aria-hidden="true"></div>
+
+  <div class="shell">
+    <header class="top">
+      <div class="brand-block">
+        <p class="brand">IvaFluud</p>
+        <p class="tagline">C++ playground · открывается из файла</p>
+      </div>
+      <div class="controls">
+        <label class="field">
+          <span>Стандарт</span>
+          <select id="standard" aria-label="Стандарт C++">
+            <option value="c++17">C++17</option>
+            <option value="c++20" selected>C++20</option>
+            <option value="c++23">C++23</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Пример</span>
+          <select id="example" aria-label="Примеры программ">
+            <option value="hello">Hello, world</option>
+            <option value="sum">Сумма из stdin</option>
+            <option value="fib">Фибоначчи</option>
+            <option value="lambda">Лямбды C++20</option>
+          </select>
+        </label>
+        <button type="button" class="run" id="runBtn">
+          <span class="run-label">▶ Запустить</span>
+          <span class="run-hotkey">Ctrl+Enter</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="pane editor-pane" aria-label="Редактор кода">
+        <div class="pane-head">
+          <h1>main.cpp</h1>
+          <p id="status" class="status idle">Готов</p>
+        </div>
+        <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Исходный код C++"></textarea>
+      </section>
+
+      <aside class="side">
+        <section class="pane io-pane" aria-label="Ввод программы">
+          <div class="pane-head">
+            <h2>stdin</h2>
+            <p class="hint">Данные для cin / scanf</p>
+          </div>
+          <textarea id="stdin" spellcheck="false" placeholder="Введите входные данные…" aria-label="Стандартный ввод"></textarea>
+        </section>
+        <section class="pane out-pane" aria-label="Результат">
+          <div class="pane-head">
+            <h2>Вывод</h2>
+            <p id="meta" class="hint">stdout · stderr · статус</p>
+          </div>
+          <pre id="output" class="output empty" tabindex="0"></pre>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Один файл — откройте в браузере. Компиляция через <code>Wandbox</code> (нужен интернет).
+        Горячая клавиша: <code>Ctrl+Enter</code>.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const COMPILERS = {
+        "c++17": "gcc-13.2.0",
+        "c++20": "gcc-13.2.0",
+        "c++23": "gcc-head",
+      };
+      const OPTIONS = {
+        "c++17": "warning,c++17",
+        "c++20": "warning,c++20",
+        "c++23": "warning,c++2b",
+      };
+
+      const EXAMPLES = {
+        hello: {
+          stdin: "",
+          code: `#include <iostream>
+
+int main() {
+    std::cout << "Hello from IvaFluud\\n";
+    std::cout << "C++ is ready.\\n";
+    return 0;
+}
+`,
+        },
+        sum: {
+          stdin: "7 15\n",
+          code: `#include <iostream>
+
+int main() {
+    long long a, b;
+    if (!(std::cin >> a >> b)) {
+        std::cerr << "Need two numbers on stdin\\n";
+        return 1;
+    }
+    std::cout << a << " + " << b << " = " << (a + b) << "\\n";
+    return 0;
+}
+`,
+        },
+        fib: {
+          stdin: "12\n",
+          code: `#include <iostream>
+
+int main() {
+    int n;
+    if (!(std::cin >> n) || n < 0 || n > 90) {
+        std::cerr << "Enter n in [0..90]\\n";
+        return 1;
+    }
+    if (n <= 1) {
+        std::cout << n << "\\n";
+        return 0;
+    }
+    long long a = 0, b = 1;
+    for (int i = 2; i <= n; ++i) {
+        long long next = a + b;
+        a = b;
+        b = next;
+    }
+    std::cout << "F(" << n << ") = " << b << "\\n";
+    return 0;
+}
+`,
+        },
+        lambda: {
+          stdin: "",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+int main() {
+    std::vector<int> xs{3, 1, 4, 1, 5, 9, 2, 6};
+    std::sort(xs.begin(), xs.end());
+    const auto sum = std::accumulate(xs.begin(), xs.end(), 0);
+    std::cout << "sorted:";
+    for (int x : xs) std::cout << ' ' << x;
+    std::cout << "\\nsum = " << sum << "\\n";
+    auto twice = [](int v) { return v * 2; };
+    std::cout << "twice(21) = " << twice(21) << "\\n";
+    return 0;
+}
+`,
+        },
+      };
+
+      const codeEl = document.getElementById("code");
+      const stdinEl = document.getElementById("stdin");
+      const standardEl = document.getElementById("standard");
+      const exampleEl = document.getElementById("example");
+      const runBtn = document.getElementById("runBtn");
+      const outputEl = document.getElementById("output");
+      const statusEl = document.getElementById("status");
+      const metaEl = document.getElementById("meta");
+      let busy = false;
+
+      function loadExample(key) {
+        const sample = EXAMPLES[key] || EXAMPLES.hello;
+        codeEl.value = sample.code.trimStart();
+        stdinEl.value = sample.stdin;
+        setStatus("idle", "Готов");
+        outputEl.classList.add("empty");
+        outputEl.textContent = "";
+        metaEl.textContent = "stdout · stderr · статус";
+      }
+
+      function setStatus(kind, text) {
+        statusEl.className = "status " + kind;
+        statusEl.textContent = text;
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      function renderResult(data, elapsedMs, standard) {
+        outputEl.classList.remove("empty");
+        const status = String(data.status ?? "");
+        const ok = status === "0";
+        const compileErr = data.compiler_error || data.compiler_message || "";
+        const stdout = data.program_output || "";
+        const stderr = data.program_error || "";
+        const parts = [];
+
+        parts.push(
+          `<span class="sec">Статус</span>` +
+            escapeHtml(ok ? "Finished." : compileErr && !stdout ? "Compilation failed." : "Exited with errors.") +
+            (status !== "" ? ` · exit ${escapeHtml(status)}` : "") +
+            ` · ${elapsedMs} ms · ${escapeHtml(standard)}`
+        );
+
+        if (compileErr && !ok) {
+          parts.push(`<span class="sec">compiler</span><span class="err-text">${escapeHtml(compileErr)}</span>`);
+        }
+        if (stdout) {
+          parts.push(`<span class="sec">stdout</span><span class="ok-text">${escapeHtml(stdout)}</span>`);
+        }
+        if (stderr) {
+          parts.push(`<span class="sec">stderr</span><span class="err-text">${escapeHtml(stderr)}</span>`);
+        }
+        if (!compileErr && !stdout && !stderr) {
+          parts.push(`<span class="sec">Вывод</span>(пусто)`);
+        }
+
+        outputEl.innerHTML = parts.join("\n");
+        metaEl.textContent = ok ? "успех" : "ошибка";
+        setStatus(ok ? "ok" : "err", ok ? "Готово" : "Ошибка");
+      }
+
+      async function run() {
+        if (busy) return;
+        busy = true;
+        runBtn.disabled = true;
+        runBtn.classList.add("busy");
+        setStatus("run", "Компиляция…");
+        outputEl.classList.remove("empty");
+        outputEl.textContent = "Отправляем код в компилятор…";
+
+        const standard = standardEl.value;
+        const started = performance.now();
+
+        try {
+          const res = await fetch("https://wandbox.org/api/compile.json", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: codeEl.value,
+              stdin: stdinEl.value,
+              compiler: COMPILERS[standard] || COMPILERS["c++20"],
+              options: OPTIONS[standard] || OPTIONS["c++20"],
+              "compiler-option-raw": "-Wall -Wextra",
+            }),
+          });
+
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          renderResult(data, Math.round(performance.now() - started), standard);
+        } catch (err) {
+          outputEl.classList.remove("empty");
+          outputEl.innerHTML =
+            `<span class="sec">Ошибка</span><span class="err-text">${escapeHtml(String(err.message || err))}</span>\n\n` +
+            `Нужен интернет. Если браузер блокирует запросы с файла — откройте через локальный сервер или разрешите wandbox.org.`;
+          setStatus("err", "Сбой сети");
+          metaEl.textContent = "не удалось связаться с компилятором";
+        } finally {
+          busy = false;
+          runBtn.disabled = false;
+          runBtn.classList.remove("busy");
+        }
+      }
+
+      function onTab(e) {
+        if (e.key !== "Tab") return;
+        e.preventDefault();
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
+        const value = e.target.value;
+        e.target.value = value.slice(0, start) + "  " + value.slice(end);
+        e.target.selectionStart = e.target.selectionEnd = start + 2;
+      }
+
+      exampleEl.addEventListener("change", () => loadExample(exampleEl.value));
+      runBtn.addEventListener("click", run);
+      codeEl.addEventListener("keydown", onTab);
+      stdinEl.addEventListener("keydown", onTab);
+      window.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          run();
+        }
+      });
+
+      loadExample("hello");
+    })();
+  </script>
+</body>
+</html>
