@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru" translate="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="google" content="notranslate" />
+    <title>FORGE — C++ compiler</title>
+    <meta
+      name="description"
+      content="FORGE — онлайн-компилятор C++: пишите код, запускайте, смотрите вывод."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+    <div class="grid-glow" aria-hidden="true"></div>
+
+    <div class="shell">
+      <header class="top">
+        <div class="brand-block">
+          <p class="brand">FORGE</p>
+          <p class="tagline">C++ playground · g++ on the metal</p>
+        </div>
+        <div class="controls">
+          <label class="field">
+            <span>Стандарт</span>
+            <select id="standard" aria-label="Стандарт C++">
+              <option value="c++17">C++17</option>
+              <option value="c++20" selected>C++20</option>
+              <option value="c++23">C++23</option>
+            </select>
+          </label>
+          <label class="field examples">
+            <span>Пример</span>
+            <select id="example" aria-label="Примеры программ">
+              <option value="hello">Hello, world</option>
+              <option value="sum">Сумма из stdin</option>
+              <option value="fib">Фибоначчи</option>
+              <option value="lambda">Лямбды C++20</option>
+            </select>
+          </label>
+          <button type="button" class="run" id="runBtn">
+            <span class="run-label">▶ Запустить</span>
+            <span class="run-hotkey">Ctrl+Enter</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="pane editor-pane" aria-label="Редактор кода">
+          <div class="pane-head">
+            <h1>main.cpp</h1>
+            <p id="status" class="status idle">Готов</p>
+          </div>
+          <textarea
+            id="code"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="off"
+            aria-label="Исходный код C++"
+          ></textarea>
+        </section>
+
+        <aside class="side">
+          <section class="pane io-pane" aria-label="Ввод программы">
+            <div class="pane-head">
+              <h2>stdin</h2>
+              <p class="hint">Данные для cin / scanf</p>
+            </div>
+            <textarea
+              id="stdin"
+              spellcheck="false"
+              placeholder="Введите входные данные…"
+              aria-label="Стандартный ввод"
+            ></textarea>
+          </section>
+
+          <section class="pane out-pane" aria-label="Результат">
+            <div class="pane-head">
+              <h2>Вывод</h2>
+              <p id="meta" class="hint">stdout · stderr · статус</p>
+            </div>
+            <pre id="output" class="output" tabindex="0"></pre>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="foot">
+        <p>
+          Локальный компилятор на <code>g++</code>. Лимит: 64&nbsp;КБ кода · 4&nbsp;с
+          выполнения · без сети у процесса.
+        </p>
+      </footer>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
