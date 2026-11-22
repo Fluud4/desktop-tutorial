@@ -125,7 +125,7 @@ function runProcess(command, args, options = {}) {
 }
 
 async function compileAndRun(code, stdin, standard) {
-  const workDir = await fsp.mkdtemp(path.join(os.tmpdir(), "forge-cxx-"));
+  const workDir = await fsp.mkdtemp(path.join(os.tmpdir(), "ivafluud-cxx-"));
   const sourcePath = path.join(workDir, "main.cpp");
   const binaryPath = path.join(workDir, "program");
 
@@ -300,5 +300,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`FORGE listening on http://${HOST}:${PORT}`);
+  console.log(`IvaFluud listening on http://${HOST}:${PORT}`);
 });

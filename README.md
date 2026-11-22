@@ -1,4 +1,4 @@
-# FORGE — C++ compiler playground
+# IvaFluud — C++ compiler playground
 
 Онлайн-компилятор C++ с редактором, stdin и выводом программы. Код собирается локально через `g++` и сразу запускается.
 

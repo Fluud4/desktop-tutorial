@@ -5,7 +5,7 @@
       code: `#include <iostream>
 
 int main() {
-    std::cout << "Hello from FORGE\\n";
+    std::cout << "Hello from IvaFluud\\n";
     std::cout << "C++ is ready.\\n";
     return 0;
 }

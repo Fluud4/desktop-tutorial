@@ -1,8 +1,8 @@
 {
-  "name": "forge-cxx",
+  "name": "ivafluud-cxx",
   "version": "1.0.0",
   "private": true,
-  "description": "In-browser C++ playground that compiles and runs code with g++",
+  "description": "IvaFluud — in-browser C++ playground that compiles and runs code with g++",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
